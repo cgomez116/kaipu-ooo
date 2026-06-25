@@ -1,0 +1,29 @@
+# Vivado project files
+*.jou
+*.log
+*.str
+*.xpr
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/
+*.gen/
+*.bit
+*.ltx
+*.rpt
+*.dcp
+*.mcs
+*.prm
+*.xdc.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+.vscode/
+.idea/

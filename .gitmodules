@@ -1,0 +1,3 @@
+[submodule "vendor/kaipu"]
+	path = vendor/kaipu
+	url = https://github.com/cgomez116/kaipu.git
