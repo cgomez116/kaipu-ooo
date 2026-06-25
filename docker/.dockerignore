@@ -1,0 +1,6 @@
+# Keep Docker build context small — only send the docker/ directory contents.
+# The installer (.bin) is the only large file needed at image-build time.
+# Everything else is mounted at run time via -v.
+*
+!docker/Xilinx_Unified_*.bin
+!docker/install_config.txt

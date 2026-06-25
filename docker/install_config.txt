@@ -1,0 +1,24 @@
+# Vivado batch-mode install configuration.
+# Installs only what is needed: Vivado ML Standard + Artix-7 device support.
+# This keeps the Docker image ~35 GB instead of ~100 GB.
+#
+# To list available edition/product IDs in an installer:
+#   ./Xilinx_Unified_*.bin --listComponents
+#
+# Edition: Vivado ML Standard (free, supports Artix-7)
+Edition=Vivado ML Standard
+
+# Install root — must match the PATH set in the Dockerfile
+Destination=/tools/Xilinx
+
+# Device families — Artix-7 only (A7-100T is XC7A100T)
+Modules=Virtex UltraScale+:0,Virtex UltraScale:0,UltraScale:0,Zynq-7000:0,Artix-7:1,Kintex-7:0,Zynq UltraScale+ MPSoC:0,Zynq UltraScale+ RFSoC:0,Kintex UltraScale+:0
+
+# Skip WebTalk phone-home
+EnableWebTalk=false
+
+# No desktop shortcuts needed in a container
+CreateProgramGroupShortcuts=0
+CreateShortcutsForAllUsers=0
+CreateDesktopShortcuts=0
+CreateFileAssociation=0

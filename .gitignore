@@ -27,4 +27,9 @@ Thumbs.db
 *.swo
 .vscode/
 .idea/
+
+# Build outputs
 synth/
+
+# Vivado installer (large binary, never commit)
+docker/Xilinx_Unified_*.bin
