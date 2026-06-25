@@ -9,12 +9,10 @@ TOOLS  := $(VENDOR)/tools
 PROG     ?= $(VENDOR)/tests/programs/looping.asm
 PROG_HEX := $(PROG:.asm=.hex)
 
-VIVADO       ?= vivado
-DOCKER_IMAGE ?= kaipu-vivado
-BITSTREAM    := synth/nexys_a7/top.bit
-
-# Nexys A7-100T Digilent device name (djtgcfg probe to confirm yours)
-DIGILENT_DEV ?= Nexys A7-100T
+VIVADO          ?= vivado
+DOCKER_IMAGE    ?= kaipu-vivado
+BITSTREAM       := synth/nexys_a7/top.bit
+OFL             ?= ~/Documents/FPGA_TOOLS/oss-cad-suite/bin/openFPGALoader
 
 # ---------------------------------------------------------------------------
 # Firmware: assemble → hex → split into lo/hi banks
@@ -76,13 +74,14 @@ docker-bit: program_lo.hex program_hi.hex
 	    make nexys_a7_bitstream
 
 # ---------------------------------------------------------------------------
-# Flash (macOS — uses Digilent Adept djtgcfg, no Vivado needed)
+# Flash (macOS — openFPGALoader from oss-cad-suite, no Vivado needed)
 # ---------------------------------------------------------------------------
-# Install Adept: https://digilent.com/reference/software/adept/start
-# Confirm device name: djtgcfg enum
+# Nexys A7 uses an FT2232H onboard JTAG (Digilent HS2-compatible).
+# openFPGALoader is already in oss-cad-suite; no extra install needed.
+# If the board isn't detected, try: $(OFL) --detect
 .PHONY: flash
 flash: $(BITSTREAM)
-	djtgcfg prog -d "$(DIGILENT_DEV)" -i 0 -f $(BITSTREAM)
+	$(OFL) -c digilent_hs2 $(BITSTREAM)
 
 # ---------------------------------------------------------------------------
 # Submodule helpers
@@ -104,7 +103,7 @@ help:
 	@echo "Mac-native workflow:"
 	@echo "  1. Download Vivado installer to docker/, then: make docker-build"
 	@echo "  2. make docker-bit [PROG=path/to/foo.asm]"
-	@echo "  3. make flash                  (board connected via USB)"
+	@echo "  3. make flash                  (openFPGALoader, already in oss-cad-suite)"
 	@echo ""
 	@echo "Linux/CI workflow:"
 	@echo "  make nexys_a7_bitstream [PROG=path/to/foo.asm]"
