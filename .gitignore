@@ -31,5 +31,8 @@ Thumbs.db
 # Build outputs
 synth/
 
-# Vivado installer (large binary, never commit)
+# Vivado/AMD installer and credentials (never commit)
+docker/FPGAs_AdaptiveSoCs_Unified_*.bin
 docker/Xilinx_Unified_*.bin
+docker/.amd_user
+docker/.amd_pass

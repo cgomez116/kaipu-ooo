@@ -56,10 +56,15 @@ bit: nexys_a7_bitstream
 
 .PHONY: docker-build
 docker-build:
-	@echo "Building kaipu-vivado Docker image (~35 GB, ~45 min first time)..."
-	@test -n "$$(ls docker/Xilinx_Unified_*.bin 2>/dev/null)" || \
-	    { echo "ERROR: download the Vivado ML Standard Linux installer to docker/ first"; exit 1; }
-	docker build -t $(DOCKER_IMAGE) docker/
+	@echo "Building kaipu-vivado Docker image (~25-35 GB download, ~60 min)..."
+	@test -n "$$(ls docker/FPGAs_AdaptiveSoCs_Unified_*.bin 2>/dev/null)" || \
+	    { echo "ERROR: download the Vivado ML Standard web installer to docker/ first"; exit 1; }
+	@test -f docker/.amd_user && test -f docker/.amd_pass || \
+	    { echo "ERROR: create docker/.amd_user and docker/.amd_pass with your AMD credentials"; exit 1; }
+	DOCKER_BUILDKIT=1 docker build \
+	    --secret id=amd_user,src=docker/.amd_user \
+	    --secret id=amd_pass,src=docker/.amd_pass \
+	    -t $(DOCKER_IMAGE) docker/
 
 # Run the Vivado build inside the container.
 # Mounts the repo root at /work so the container can read sources and write
@@ -101,9 +106,12 @@ vendor-bump:
 .PHONY: help
 help:
 	@echo "Mac-native workflow:"
-	@echo "  1. Download Vivado installer to docker/, then: make docker-build"
-	@echo "  2. make docker-bit [PROG=path/to/foo.asm]"
-	@echo "  3. make flash                  (openFPGALoader, already in oss-cad-suite)"
+	@echo "  1. Download web installer (~1.5 GB) to docker/"
+	@echo "     echo your@amd.com  > docker/.amd_user"
+	@echo "     echo yourpassword  > docker/.amd_pass"
+	@echo "  2. make docker-build       (~25-35 GB download, ~60 min, one-time)"
+	@echo "  3. make docker-bit         # produces synth/nexys_a7/top.bit"
+	@echo "  4. make flash              # openFPGALoader (already in oss-cad-suite)"
 	@echo ""
 	@echo "Linux/CI workflow:"
 	@echo "  make nexys_a7_bitstream [PROG=path/to/foo.asm]"

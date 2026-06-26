@@ -1,6 +1,9 @@
-# Keep Docker build context small — only send the docker/ directory contents.
-# The installer (.bin) is the only large file needed at image-build time.
+# Keep Docker build context small.
+# The installer and config are the only files needed at image-build time.
 # Everything else is mounted at run time via -v.
+# Credential files (.amd_user / .amd_pass) are NOT copied into the image —
+# they are passed as BuildKit --secret mounts and never touch a layer.
 *
+!docker/FPGAs_AdaptiveSoCs_Unified_*.bin
 !docker/Xilinx_Unified_*.bin
 !docker/install_config.txt
