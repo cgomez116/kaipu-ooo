@@ -62,6 +62,7 @@ docker-build:
 	@test -f docker/.amd_user && test -f docker/.amd_pass || \
 	    { echo "ERROR: create docker/.amd_user and docker/.amd_pass with your AMD credentials"; exit 1; }
 	DOCKER_BUILDKIT=1 docker build \
+	    --platform linux/amd64 \
 	    --secret id=amd_user,src=docker/.amd_user \
 	    --secret id=amd_pass,src=docker/.amd_pass \
 	    -t $(DOCKER_IMAGE) docker/
@@ -73,6 +74,7 @@ docker-build:
 docker-bit: program_lo.hex program_hi.hex
 	mkdir -p synth/nexys_a7
 	docker run --rm \
+	    --platform linux/amd64 \
 	    -v "$(CURDIR):/work" \
 	    -w /work \
 	    $(DOCKER_IMAGE) \
