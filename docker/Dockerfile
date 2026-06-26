@@ -46,17 +46,18 @@ COPY install_config.txt               /tmp/install_config.txt
 # any layer. The installer uses them only to authenticate the download.
 RUN --mount=type=secret,id=amd_user \
     --mount=type=secret,id=amd_pass \
+    chmod +x /tmp/installer.bin && \
     AMD_USER=$(cat /run/secrets/amd_user) && \
     AMD_PASS=$(cat /run/secrets/amd_pass) && \
-    chmod +x /tmp/installer.bin && \
+    cp /tmp/install_config.txt /tmp/install_config_auth.txt && \
+    echo "User=${AMD_USER}"     >> /tmp/install_config_auth.txt && \
+    echo "Password=${AMD_PASS}" >> /tmp/install_config_auth.txt && \
     /tmp/installer.bin \
         -- \
         --agree XilinxEULA,3rdPartyEULA \
         --batch Install \
-        --config /tmp/install_config.txt \
-        --user "$AMD_USER" \
-        --pw   "$AMD_PASS" \
-    && rm /tmp/installer.bin
+        --config /tmp/install_config_auth.txt \
+    && rm /tmp/installer.bin /tmp/install_config_auth.txt
 
 ENV PATH="/tools/Xilinx/Vivado/2026.1/bin:${PATH}"
 
