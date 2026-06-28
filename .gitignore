@@ -30,6 +30,8 @@ Thumbs.db
 
 # Build outputs
 synth/
+*.hex
+*.lst
 
 # Vivado/AMD installer and credentials (never commit)
 docker/FPGAs_AdaptiveSoCs_Unified_*.bin
