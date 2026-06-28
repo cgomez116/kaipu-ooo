@@ -1,24 +1,18 @@
-# Vivado batch-mode install configuration.
-# Installs only what is needed: Vivado ML Standard + Artix-7 device support.
-# This keeps the Docker image ~35 GB instead of ~100 GB.
-#
-# To list available edition/product IDs in an installer:
-#   ./Xilinx_Unified_*.bin --listComponents
-#
-# Edition: Vivado ML Standard (free, supports Artix-7)
-Edition=Vivado ML Standard
+#### Vivado Design Suite Install Configuration ####
+# Edition confirmed via: make docker-config-gen → product 2 (Vivado)
+Edition=Vivado Design Suite
+
+Product=Vivado
 
 # Install root — must match the PATH set in the Dockerfile
 Destination=/tools/Xilinx
 
-# Device families — Artix-7 only (A7-100T is XC7A100T)
-Modules=Virtex UltraScale+:0,Virtex UltraScale:0,UltraScale:0,Zynq-7000:0,Artix-7:1,Kintex-7:0,Zynq UltraScale+ MPSoC:0,Zynq UltraScale+ RFSoC:0,Kintex UltraScale+:0
+# Device families: Artix-7 only (Nexys A7-100T = XC7A100T).
+# All other families and optional components disabled to minimise download size.
+Modules=xc2ve3804:0,xcvp2502:0,Virtex-7 FPGAs:0,xcvr1652:0,Zynq UltraScale+ RFSoCs:0,xcvm1502:0,xcvp1902:0,xcvc2602:0,xc2ve3858:0,xqvc1902:0,xcvm2902:0,xcvr1652_es1:0,xqvc1702:0,xcvp2802:0,Virtex UltraScale+ FPGAs:0,Kintex UltraScale FPGAs:0,xcvc1902:0,xcvm2502:0,Kintex-7 FPGAs:0,Artix-7 FPGAs:1,xcvh1582:0,xcvm1802:0,Install Devices for Kria SOMs and Starter Kits:0,xqve2302:0,xqrvc1902:0,Spartan UltraScale+:0,xcvm2302:0,Virtex UltraScale FPGAs:0,xave1752:0,Install devices for Alveo and edge acceleration platforms:0,xave2002:0,Zynq-7000 All Programmable SoC:0,xcve2802:0,xqve2102:0,xqvp1702:0,xcvp1402:0,xcvh1782:0,xcvh1542:0,Power Design Manager (PDM):0,xqvm1402:0,xqvm1802:0,xqvp1202:0,xcvp1502:0,xcvh1522:0,xqvp1402:0,xqvm1502:0,Spartan-7 FPGAs:0,xqrve2302:0,xcvm2202:0,xqvm1102:0,xcve2302:0,xcvp1052:0,xave2202:0,Kintex UltraScale+ FPGAs:0,xc2ve3358:0,xcvm1302:0,xcvp1702:0,Vitis Embedded Development:0,xqvp1052:0,xqvp1502:0,xcvp1552:0,xcve2602:0,xcvm2152:0,Vitis Networking P4:0,xave2102:0,xcve2202:0,xcvp1102:0,xcvh1742:0,xc2vm3558:0,xcvr1602:0,Virtex UltraScale+ 58G FPGAs:0,xcvp1202:0,xcvm1102:0,xqvp2502:0,Virtex UltraScale+ HBM FPGAs:0,xc2ve3504:0,Vitis Model Composer(A toolbox for Simulink):0,xcve2102:0,xc2ve3558:0,xave2602:0,xcvm1402:0,Artix UltraScale+ FPGAs:0,Zynq UltraScale+ MPSoCs:0,xcvp1002:0,xcvc1802:0,xcvr1602_es1:0,xc2vm3858:0,xave2302:0,xcv80:0,xcvc1502:0,xcvc1702:0,DocNav:0,xcvp1802:0,xcvc2802:0,xcve2002:0,xave2802:0,xcve1752:0
 
-# Skip WebTalk phone-home
-EnableWebTalk=false
+InstallOptions=Acquire or Manage a License Key:0
 
-# No desktop shortcuts needed in a container
 CreateProgramGroupShortcuts=0
-CreateShortcutsForAllUsers=0
 CreateDesktopShortcuts=0
 CreateFileAssociation=0

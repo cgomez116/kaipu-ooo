@@ -1,19 +1,37 @@
 # kaipu-ooo Vivado build container
 # ============================================================
 # SETUP (one-time):
-#   1. Download "Vivado ML Standard - Linux Self Extracting Web Installer"
+#   1. Download "FPGAs_AdaptiveSoCs_Unified_*_Lin64.bin"
 #      (~1.5 GB) from https://www.xilinx.com/support/download.html
-#      Save as: docker/FPGAs_AdaptiveSoCs_Unified_SDI_<ver>_Lin64.bin
+#      Save as: docker/FPGAs_AdaptiveSoCs_Unified_<ver>_Lin64.bin
 #
-#   2. Put your AMD account credentials in two local files
-#      (these are .gitignored, never committed):
-#        echo "your@email.com" > docker/.amd_user
-#        echo "yourpassword"   > docker/.amd_pass
+#   2. Generate an AMD auth token (interactive — prompts for credentials):
+#        make docker-auth-token
+#      Saves token to docker/.amd_token (gitignored).
+#      Re-run this step if docker-build later fails with an auth error.
 #
-#   3. make docker-build        (~25-35 GB download, ~60 min first time)
+#   3. make docker-build        (~10 GB download, ~90 min first time)
 #
 # USAGE (every build):
 #   make docker-bit
+#
+# ============================================================
+# HARD-WON INSTALLER FACTS (2026.1 unified installer):
+#
+# Edition:   Must be "Vivado Design Suite" — NOT "Vitis Unified Software
+#            Platform". The wrong edition downloads 32 GB of Vitis + AIE
+#            tools that Artix-7 doesn't support. Confirmed via ConfigGen.
+#
+# Auth:      --user/--pw CLI flags were removed in 2026.1. The token file
+#            is ~/.Xilinx/wi_authentication_key (NOT xinstall/xauth.token).
+#            Generate with: make docker-auth-token (runs xsetup AuthTokenGen).
+#
+# Docker:    macOS Docker Desktop socket lives at ~/.docker/run/docker.sock,
+#            not /var/run/docker.sock. After a reset the symlink may be gone;
+#            the Makefile detects and falls back automatically.
+#            --load is required when using the docker-container buildx driver.
+#            Increase Docker Desktop memory to ≥16 GB — the Java installer
+#            OOM-kills below that threshold.
 # ============================================================
 FROM --platform=linux/amd64 ubuntu:22.04
 
@@ -41,23 +59,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY FPGAs_AdaptiveSoCs_Unified_*.bin /tmp/installer.bin
 COPY install_config.txt               /tmp/install_config.txt
 
-# Run the installer. AMD credentials are injected via BuildKit secrets
-# (--secret id=amd_user / amd_pass) and are NOT stored in the image or
-# any layer. The installer uses them only to authenticate the download.
-RUN --mount=type=secret,id=amd_user \
-    --mount=type=secret,id=amd_pass \
+# Run the installer. The AMD auth token is injected via BuildKit secret
+# (--secret id=amd_token) and is NOT stored in the image or any layer.
+# Generate the token first with:  make docker-auth-token
+RUN --mount=type=secret,id=amd_token \
     chmod +x /tmp/installer.bin && \
-    AMD_USER=$(cat /run/secrets/amd_user) && \
-    AMD_PASS=$(cat /run/secrets/amd_pass) && \
-    cp /tmp/install_config.txt /tmp/install_config_auth.txt && \
-    echo "User=${AMD_USER}"     >> /tmp/install_config_auth.txt && \
-    echo "Password=${AMD_PASS}" >> /tmp/install_config_auth.txt && \
+    mkdir -p /root/.Xilinx && \
+    cp /run/secrets/amd_token /root/.Xilinx/wi_authentication_key && \
     /tmp/installer.bin \
         -- \
         --agree XilinxEULA,3rdPartyEULA \
         --batch Install \
-        --config /tmp/install_config_auth.txt \
-    && rm /tmp/installer.bin /tmp/install_config_auth.txt
+        --config /tmp/install_config.txt \
+    && rm /tmp/installer.bin /root/.Xilinx/wi_authentication_key
 
 ENV PATH="/tools/Xilinx/Vivado/2026.1/bin:${PATH}"
 

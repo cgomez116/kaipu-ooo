@@ -36,3 +36,4 @@ docker/FPGAs_AdaptiveSoCs_Unified_*.bin
 docker/Xilinx_Unified_*.bin
 docker/.amd_user
 docker/.amd_pass
+docker/.amd_token
