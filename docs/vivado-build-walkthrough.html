@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kaipu-ooo — Vivado Build Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ THEME — Blueprint: slate + teal, dark-first ============ */
+:root {
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
+
+  --bg:               #0d1117;
+  --surface:          #161b22;
+  --surface2:         #1c2333;
+  --surface-elevated: #21262d;
+  --border:           rgba(255,255,255,0.07);
+  --border-bright:    rgba(255,255,255,0.14);
+  --text:             #e6edf3;
+  --text-dim:         #8b949e;
+  --text-muted:       #484f58;
+
+  --teal:             #2dd4bf;
+  --teal-dim:         rgba(45,212,191,0.10);
+  --teal-border:      rgba(45,212,191,0.25);
+  --blue:             #58a6ff;
+  --blue-dim:         rgba(88,166,255,0.10);
+  --green:            #3fb950;
+  --green-dim:        rgba(63,185,80,0.10);
+  --amber:            #d29922;
+  --amber-dim:        rgba(210,153,34,0.10);
+  --red:              #f85149;
+  --red-dim:          rgba(248,81,73,0.10);
+  --slate:            #30363d;
+
+  --step1: var(--teal);   --step1-dim: var(--teal-dim);   --step1-border: var(--teal-border);
+  --step2: var(--blue);   --step2-dim: var(--blue-dim);   --step2-border: rgba(88,166,255,0.25);
+  --step3: var(--green);  --step3-dim: var(--green-dim);  --step3-border: rgba(63,185,80,0.25);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:               #f5f7f9;
+    --surface:          #ffffff;
+    --surface2:         #f0f3f7;
+    --surface-elevated: #ffffff;
+    --border:           rgba(0,0,0,0.08);
+    --border-bright:    rgba(0,0,0,0.15);
+    --text:             #1c2128;
+    --text-dim:         #57606a;
+    --text-muted:       #8c959f;
+    --teal:             #0f766e;
+    --teal-dim:         rgba(15,118,110,0.08);
+    --teal-border:      rgba(15,118,110,0.30);
+    --blue:             #0969da;
+    --blue-dim:         rgba(9,105,218,0.08);
+    --green:            #1a7f37;
+    --green-dim:        rgba(26,127,55,0.08);
+    --amber:            #9a6700;
+    --amber-dim:        rgba(154,103,0,0.08);
+    --red:              #cf222e;
+    --red-dim:          rgba(207,34,46,0.08);
+    --slate:            #e1e4e8;
+    --step1-border: rgba(15,118,110,0.30);
+    --step2-border: rgba(9,105,218,0.30);
+    --step3-border: rgba(26,127,55,0.30);
+  }
+}
+
+/* ============ RESET ============ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 30% at 50% 0%, var(--teal-dim) 0%, transparent 60%),
+    radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: auto, 24px 24px;
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  padding: 48px 24px 80px;
+  overflow-wrap: break-word;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.anim-up    { animation: fadeUp    0.45s ease-out both; animation-delay: calc(var(--i,0) * 0.07s); }
+.anim-scale { animation: fadeScale 0.35s ease-out both; animation-delay: calc(var(--i,0) * 0.06s); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============ LAYOUT ============ */
+.page { max-width: 860px; margin: 0 auto; }
+
+/* ============ HEADER ============ */
+.header { margin-bottom: 48px; }
+.header__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--teal);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header__eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background: var(--teal);
+  border-radius: 1px;
+}
+h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 14px;
+  text-wrap: balance;
+}
+h1 span { color: var(--teal); }
+.header__sub {
+  font-size: 16px;
+  color: var(--text-dim);
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* ============ PREREQS STRIP ============ */
+.prereqs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 48px;
+}
+.prereq-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: border-color 0.2s;
+}
+.prereq-badge:hover { border-color: var(--border-bright); }
+.prereq-badge .check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  border: 1px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.prereq-badge .check::after {
+  content: '';
+  width: 6px;
+  height: 4px;
+  border-left: 1.5px solid var(--green);
+  border-bottom: 1.5px solid var(--green);
+  transform: rotate(-45deg) translateY(-1px);
+}
+.prereq-badge code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============ SECTION LABEL ============ */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* ============ STEP CARDS ============ */
+.steps { display: flex; flex-direction: column; gap: 20px; margin-bottom: 48px; }
+
+.step-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.step-card:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+}
+
+.step-card--1 { border-color: var(--step1-border); }
+.step-card--1:hover { border-color: var(--teal); }
+.step-card--2 { border-color: var(--step2-border); }
+.step-card--2:hover { border-color: var(--blue); }
+.step-card--3 { border-color: var(--step3-border); }
+.step-card--3:hover { border-color: var(--green); }
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-card--1 .step-num { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
+.step-card--2 .step-num { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--step2-border); }
+.step-card--3 .step-num { background: var(--green-dim); color: var(--green); border: 1px solid var(--step3-border); }
+
+.step-title { font-size: 17px; font-weight: 600; }
+.step-card--1 .step-title { color: var(--teal); }
+.step-card--2 .step-title { color: var(--blue); }
+.step-card--3 .step-title { color: var(--green); }
+
+.step-body { padding: 20px 24px; }
+.step-body p { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.65; }
+.step-body p:last-child { margin-bottom: 0; }
+.step-body strong { color: var(--text); font-weight: 500; }
+
+/* ============ CODE BLOCK ============ */
+.code-file {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.code-file__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.code-file__header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border-bright); }
+.code-file__body {
+  background: var(--surface-elevated);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+.code-file__body .cmd { color: var(--teal); }
+.code-file__body .arg { color: var(--blue); }
+.code-file__body .cmt { color: var(--text-muted); }
+.code-file__body .path { color: var(--amber); }
+
+/* Inline code */
+code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ============ CALLOUT ============ */
+.callout {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 3px solid var(--callout-color, var(--teal));
+  background: color-mix(in srgb, var(--callout-color, var(--teal)) 8%, transparent);
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.callout--info  { --callout-color: var(--blue); }
+.callout--warn  { --callout-color: var(--amber); }
+.callout--green { --callout-color: var(--green); }
+.callout strong { color: var(--text); font-weight: 600; }
+
+/* ============ FLOW ARROW ============ */
+.flow-arrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 0;
+}
+.flow-arrow svg {
+  width: 18px; height: 18px;
+  fill: none; stroke: var(--border-bright);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ============ MAINTENANCE SECTION ============ */
+.maint-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 48px;
+}
+.maint-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.maint-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.maint-card__title .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.maint-card p { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.6; }
+.maint-card p:last-child { margin-bottom: 0; }
+.maint-card code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============ TROUBLE TABLE ============ */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 48px;
+}
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.data-table thead { position: sticky; top: 0; z-index: 2; }
+.data-table th {
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-bright);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.data-table td.symptom { color: var(--text-dim); font-size: 12px; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr { transition: background 0.15s ease; }
+.data-table tbody tr:hover { background: var(--surface2); }
+.data-table code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.data-table small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  white-space: nowrap;
+}
+.tag--warn { background: var(--amber-dim); color: var(--amber); }
+.tag--err  { background: var(--red-dim);   color: var(--red);   }
+.tag--info { background: var(--blue-dim);  color: var(--blue);  }
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 100;
+  color: var(--text-dim);
+  transition: border-color 0.2s, color 0.2s;
+}
+.theme-toggle:hover { border-color: var(--border-bright); color: var(--text); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 640px) {
+  body { padding: 24px 16px 60px; }
+  .maint-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle light/dark">
+  <svg id="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  <svg id="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header anim-up" style="--i:0">
+    <div class="header__eyebrow">kaipu-ooo · mac-native build flow</div>
+    <h1>Vivado <span>Build</span> Walkthrough</h1>
+    <p class="header__sub">Synthesise RTL for the Digilent Nexys A7-100T (Artix-7 XC7A100T) using Vivado 2026.1 inside a Docker container. Flash directly from macOS with openFPGALoader — no Vivado license or Linux VM on the host.</p>
+  </header>
+
+  <!-- PREREQS -->
+  <div class="section-label anim-up" style="--i:1">Prerequisites — one-time setup, already complete</div>
+  <div class="prereqs anim-up" style="--i:2">
+    <div class="prereq-badge"><span class="check"></span> Docker Desktop running &mdash; disk on <code>/Volumes/FD_4TB</code>, memory ≥ 16 GB</div>
+    <div class="prereq-badge"><span class="check"></span> <code>kaipu-vivado</code> image built via <code>make docker-build</code></div>
+    <div class="prereq-badge"><span class="check"></span> oss-cad-suite at <code>~/Documents/FPGA_TOOLS/oss-cad-suite/bin/</code></div>
+  </div>
+
+  <!-- WORKFLOW STEPS -->
+  <div class="section-label anim-up" style="--i:3">Every-build workflow</div>
+  <div class="steps">
+
+    <!-- STEP 1 -->
+    <div class="step-card step-card--1 anim-up" style="--i:4">
+      <div class="step-header">
+        <div class="step-num">01</div>
+        <div class="step-title">Build the bitstream</div>
+      </div>
+      <div class="step-body">
+        <p>Run from the <code>kaipu-ooo</code> directory. Vivado runs inside the container; the repo root is mounted at <code>/work</code> so it can read RTL sources and write the bitstream back to the host. <strong>The container tears itself down when done.</strong></p>
+        <div class="code-file">
+          <div class="code-file__header"><span class="dot"></span> terminal</div>
+          <pre class="code-file__body"><span class="cmd">cd</span> <span class="path">~/Documents/GitHub/kaipu-ooo</span>
+<span class="cmd">make</span> <span class="arg">docker-bit</span></pre>
+        </div>
+        <p>Output lands at <code>synth/nexys_a7/top.bit</code> on the host. Typical runtime: 15–30 min depending on design complexity.</p>
+        <p>To build with a specific firmware instead of the default <code>looping.asm</code> no-op:</p>
+        <div class="code-file">
+          <div class="code-file__header"><span class="dot"></span> with custom firmware</div>
+          <pre class="code-file__body"><span class="cmd">make</span> <span class="arg">docker-bit</span> PROG=<span class="path">vendor/kaipu/tests/programs/foo.asm</span></pre>
+        </div>
+        <div class="callout callout--green">
+          <strong>What's in the container:</strong> Vivado 2026.1, Python 3, Make. The repo is bind-mounted read-write at <code>/work</code> — build artifacts written there appear on your host immediately.
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOW ARROW -->
+    <div class="flow-arrow anim-up" style="--i:5">
+      <svg viewBox="0 0 20 20"><path d="M10 4 L10 16 M6 12 L10 16 L14 12"/></svg>
+      bitstream ready at synth/nexys_a7/top.bit
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card step-card--2 anim-up" style="--i:6">
+      <div class="step-header">
+        <div class="step-num">02</div>
+        <div class="step-title">Connect the board</div>
+      </div>
+      <div class="step-body">
+        <p>Plug the <strong>Nexys A7</strong> into a USB port. The board uses an FT2232H onboard JTAG chip (Digilent HS2-compatible). openFPGALoader from oss-cad-suite handles it natively — no Digilent drivers needed.</p>
+        <p>To verify the board is detected before flashing:</p>
+        <div class="code-file">
+          <div class="code-file__header"><span class="dot"></span> optional detection check</div>
+          <pre class="code-file__body"><span class="path">~/Documents/FPGA_TOOLS/oss-cad-suite/bin/</span><span class="cmd">openFPGALoader</span> --detect</pre>
+        </div>
+        <div class="callout callout--warn">
+          <strong>UART demos:</strong> the board exposes two <code>/dev/tty.usbserial-*</code> endpoints — one for JTAG, one for UART. When opening a serial terminal, pick the correct one. The glob may land on the JTAG endpoint, which gives no echo.
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOW ARROW -->
+    <div class="flow-arrow anim-up" style="--i:7">
+      <svg viewBox="0 0 20 20"><path d="M10 4 L10 16 M6 12 L10 16 L14 12"/></svg>
+      board detected
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card step-card--3 anim-up" style="--i:8">
+      <div class="step-header">
+        <div class="step-num">03</div>
+        <div class="step-title">Flash — run in your own terminal</div>
+      </div>
+      <div class="step-body">
+        <p>The Claude Code agent sandbox <strong>cannot reach USB/JTAG devices</strong>. This step must be run by you in a separate terminal.</p>
+        <div class="code-file">
+          <div class="code-file__header"><span class="dot"></span> your terminal (not agent sandbox)</div>
+          <pre class="code-file__body"><span class="cmt"># short form — uses FPGA_TOOLS path from Makefile</span>
+<span class="cmd">make</span> <span class="arg">flash</span>
+
+<span class="cmt"># or explicitly</span>
+<span class="path">~/Documents/FPGA_TOOLS/oss-cad-suite/bin/</span><span class="cmd">openFPGALoader</span> \
+  -c digilent_hs2 <span class="path">synth/nexys_a7/top.bit</span></pre>
+        </div>
+        <p>In Claude Code you can prefix with <code>!</code> to run it inline: type <code>! make flash</code> in the prompt and the output lands directly in the conversation.</p>
+        <div class="callout callout--green">
+          Flash takes a few seconds. The board resets automatically and begins executing the loaded firmware.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /steps -->
+
+  <!-- MAINTENANCE -->
+  <div class="section-label anim-up" style="--i:9">Maintenance</div>
+  <div class="maint-grid">
+
+    <div class="maint-card anim-up" style="--i:10">
+      <div class="maint-card__title">
+        <span class="dot" style="background:var(--amber)"></span>
+        Auth token expired
+      </div>
+      <p>The AMD auth token (<code>docker/.amd_token</code>) is valid for ~1 week. If <code>make docker-build</code> fails with an auth error, regenerate it:</p>
+      <div class="code-file">
+        <div class="code-file__header"><span class="dot"></span> interactive — prompts AMD credentials</div>
+        <pre class="code-file__body"><span class="cmd">make</span> <span class="arg">docker-auth-token</span></pre>
+      </div>
+    </div>
+
+    <div class="maint-card anim-up" style="--i:11">
+      <div class="maint-card__title">
+        <span class="dot" style="background:var(--blue)"></span>
+        Rebuild Docker image
+      </div>
+      <p>After a Vivado version bump or if the image is lost:</p>
+      <div class="code-file">
+        <div class="code-file__header"><span class="dot"></span> ~10 GB download, ~90 min</div>
+        <pre class="code-file__body"><span class="cmd">make</span> <span class="arg">docker-auth-token</span>  <span class="cmt"># if token stale</span>
+<span class="cmd">make</span> <span class="arg">docker-build</span></pre>
+      </div>
+    </div>
+
+    <div class="maint-card anim-up" style="--i:12">
+      <div class="maint-card__title">
+        <span class="dot" style="background:var(--red)"></span>
+        Docker Desktop won't start
+      </div>
+      <p>bbolt database panic after a reset: click <strong>Reset to factory defaults</strong> in the Docker Desktop error dialog. Then in Settings → Resources → Advanced:</p>
+      <p>Set disk image location → <code>/Volumes/FD_4TB/Docker/DockerDesktop/</code>, memory → 16 GB+. Apply &amp; Restart.</p>
+    </div>
+
+    <div class="maint-card anim-up" style="--i:13">
+      <div class="maint-card__title">
+        <span class="dot" style="background:var(--teal)"></span>
+        /var/run/docker.sock missing
+      </div>
+      <p>Happens after a Docker Desktop reset — the symlink disappears. The Makefile auto-detects and falls back to <code>~/.docker/run/docker.sock</code> automatically. No action needed.</p>
+      <p>To fix permanently: Docker Desktop → Settings → Advanced → <strong>Allow the default Docker socket to be used</strong>.</p>
+    </div>
+
+  </div><!-- /maint-grid -->
+
+  <!-- TROUBLESHOOTING TABLE -->
+  <div class="section-label anim-up" style="--i:14">Troubleshooting quick-ref</div>
+  <div class="table-wrap anim-up" style="--i:15">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Symptom</th>
+            <th>Cause</th>
+            <th>Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="symptom"><code>cannot allocate memory</code> during install<br><small>Java installer OOM-killed</small></td>
+            <td><span class="tag tag--err">OOM</span> Docker VM &lt; 16 GB RAM</td>
+            <td>Settings → Resources → Memory → 16+ GB</td>
+          </tr>
+          <tr>
+            <td class="symptom"><code>dial unix /var/run/docker.sock:</code><br><code>no such file</code></td>
+            <td><span class="tag tag--warn">reset</span> Socket symlink gone after factory reset</td>
+            <td>Makefile fallback handles it automatically. For permanent fix: enable default socket in Docker Desktop → Advanced.</td>
+          </tr>
+          <tr>
+            <td class="symptom"><code>Edition ... is invalid</code></td>
+            <td><span class="tag tag--err">config</span> Wrong edition string in <code>install_config.txt</code></td>
+            <td>Must be <code>Vivado Design Suite</code> — not <code>Vitis Unified Software Platform</code> (causes 32 GB download)</td>
+          </tr>
+          <tr>
+            <td class="symptom">Auth error during <code>docker-build</code></td>
+            <td><span class="tag tag--warn">auth</span> Token expired (~weekly)</td>
+            <td>Run <code>make docker-auth-token</code> to regenerate</td>
+          </tr>
+          <tr>
+            <td class="symptom">No echo from UART demo after flash</td>
+            <td><span class="tag tag--info">hw</span> Wrong <code>/dev/tty.usbserial-*</code> endpoint</td>
+            <td>Check which port — glob may pick JTAG endpoint. Try the other <code>usbserial</code> device.</td>
+          </tr>
+          <tr>
+            <td class="symptom">Board not detected by openFPGALoader</td>
+            <td><span class="tag tag--info">hw</span> Board not connected or wrong cable</td>
+            <td>Run <code>openFPGALoader --detect</code>. Ensure USB cable is data-capable (not charge-only).</td>
+          </tr>
+          <tr>
+            <td class="symptom">bbolt panic on Docker Desktop start</td>
+            <td><span class="tag tag--err">crash</span> Metadata DB corrupted during disk image move</td>
+            <td>Click <strong>Reset to factory defaults</strong> in the Docker Desktop error dialog</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// Detect initial theme from OS preference
+var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+updateToggleIcon(isDark);
+
+function toggleTheme() {
+  isDark = !isDark;
+  // Override with data-theme to invert from OS preference
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  updateToggleIcon(isDark);
+}
+
+function updateToggleIcon(dark) {
+  document.getElementById('icon-sun').style.display  = dark  ? 'block' : 'none';
+  document.getElementById('icon-moon').style.display = dark  ? 'none'  : 'block';
+}
+</script>
+<style>
+/* data-theme overrides for manual toggle (supplements @media) */
+[data-theme="dark"] {
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--surface-elevated:#21262d;
+  --border:rgba(255,255,255,0.07);--border-bright:rgba(255,255,255,0.14);
+  --text:#e6edf3;--text-dim:#8b949e;--text-muted:#484f58;
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.10);--teal-border:rgba(45,212,191,0.25);
+  --blue:#58a6ff;--blue-dim:rgba(88,166,255,0.10);
+  --green:#3fb950;--green-dim:rgba(63,185,80,0.10);
+  --amber:#d29922;--amber-dim:rgba(210,153,34,0.10);
+  --red:#f85149;--red-dim:rgba(248,81,73,0.10);
+  --step1-border:rgba(45,212,191,0.25);--step2-border:rgba(88,166,255,0.25);--step3-border:rgba(63,185,80,0.25);
+}
+[data-theme="light"] {
+  --bg:#f5f7f9;--surface:#ffffff;--surface2:#f0f3f7;--surface-elevated:#ffffff;
+  --border:rgba(0,0,0,0.08);--border-bright:rgba(0,0,0,0.15);
+  --text:#1c2128;--text-dim:#57606a;--text-muted:#8c959f;
+  --teal:#0f766e;--teal-dim:rgba(15,118,110,0.08);--teal-border:rgba(15,118,110,0.30);
+  --blue:#0969da;--blue-dim:rgba(9,105,218,0.08);
+  --green:#1a7f37;--green-dim:rgba(26,127,55,0.08);
+  --amber:#9a6700;--amber-dim:rgba(154,103,0,0.08);
+  --red:#cf222e;--red-dim:rgba(207,34,46,0.08);
+  --step1-border:rgba(15,118,110,0.30);--step2-border:rgba(9,105,218,0.30);--step3-border:rgba(26,127,55,0.30);
+}
+</style>
+</body>
+</html>
