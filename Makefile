@@ -11,6 +11,16 @@ PROG_HEX := $(PROG:.asm=.hex)
 
 VIVADO          ?= vivado
 DOCKER_IMAGE    ?= kaipu-vivado
+# Vivado lives here inside the container (installer path, not the classic
+# .../Vivado/<ver>/bin layout). Injected at runtime so the flow works even
+# against an image built before the Dockerfile PATH was corrected.
+VIVADO_BIN      ?= /tools/Xilinx/2026.1/Vivado/bin
+CONTAINER_PATH  := $(VIVADO_BIN):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# The free "Vivado Basic Tier" license is node-locked to a host ID = MAC.
+# Containers get a random MAC per run, so we pin it; docker/Xilinx.lic must be
+# generated against this exact address (see docker/README / AMD licensing portal).
+VIVADO_MAC      ?= 02:42:ac:11:00:02
+VIVADO_LIC      := docker/Xilinx.lic
 # Docker Desktop on macOS places the socket at ~/.docker/run/docker.sock.
 # The /var/run/docker.sock symlink may be absent after a reset; fall back here.
 DOCKER_SOCK     := $(shell [ -S /var/run/docker.sock ] && echo unix:///var/run/docker.sock || echo unix://$(HOME)/.docker/run/docker.sock)
@@ -121,15 +131,36 @@ docker-build:
 # Run the Vivado build inside the container.
 # Mounts the repo root at /work so the container can read sources and write
 # synth/nexys_a7/top.bit back to the host filesystem.
+#
+# Running Vivado 2026.1 x86-64 under emulation on Apple Silicon needs several
+# workarounds (all no-ops once the image is rebuilt from the current Dockerfile):
+#   --mac-address  pins the host ID the node-locked license is bound to.
+#   Xilinx.lic     mounted read-only; XILINXD_LICENSE_FILE points Vivado at it.
+#   PATH           injected because older images baked the wrong Vivado path.
+#   libpixman-1-0  Vivado's libxv_tcltasks.so needs it; slim base lacks it.
+#   rm libudev     FlexLM's udev dongle scan corrupts the heap under emulation
+#                  ("realloc(): invalid pointer"); removing libudev makes it skip
+#                  the scan and fall back to the (MAC) host-ID license. Install
+#                  pixman FIRST — apt itself depends on libudev.
 .PHONY: docker-bit
 docker-bit: program_lo.hex program_hi.hex
+	@test -f "$(VIVADO_LIC)" || { \
+	    echo "ERROR: $(VIVADO_LIC) missing. Generate a free 'Vivado Basic Tier'"; \
+	    echo "node-locked license for host ID $(subst :,,$(VIVADO_MAC)) at the AMD"; \
+	    echo "licensing portal and save it there (see docker/ notes)."; exit 1; }
 	mkdir -p synth/nexys_a7
 	docker run --rm \
 	    --platform linux/amd64 \
+	    --mac-address $(VIVADO_MAC) \
 	    -v "$(CURDIR):/work" \
 	    -w /work \
+	    -v "$(CURDIR)/$(VIVADO_LIC):/root/.Xilinx/Xilinx.lic:ro" \
+	    -e XILINXD_LICENSE_FILE=/root/.Xilinx/Xilinx.lic \
+	    -e PATH="$(CONTAINER_PATH)" \
 	    $(DOCKER_IMAGE) \
-	    make nexys_a7_bitstream
+	    bash -c "dpkg -s libpixman-1-0 >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq libpixman-1-0; }; \
+	             rm -f /lib/x86_64-linux-gnu/libudev.so.1* /usr/lib/x86_64-linux-gnu/libudev.so.1* 2>/dev/null; \
+	             make nexys_a7_bitstream"
 
 # ---------------------------------------------------------------------------
 # Flash (macOS — openFPGALoader from oss-cad-suite, no Vivado needed)

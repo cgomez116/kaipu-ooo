@@ -1,13 +1,15 @@
-// 25 MHz → 20 MHz PLL for Nexys A7-100T (Artix-7 XC7A100T).
+// 100 MHz → 20 MHz PLL for Nexys A7-100T (Artix-7 XC7A100T).
 // Replaces the ECP5 EHXPLLL in vendor/kaipu/fpga/basic/pll_20.v.
 //
-// MMCME2_ADV parameters for 25 MHz → 20 MHz:
-//   VCO = CLKIN * CLKFBOUT_MULT_F / DIVCLK_DIVIDE = 25 * 40 / 1 = 1000 MHz
+// The Nexys A7 board oscillator is 100 MHz (E3). MMCME2_ADV parameters:
+//   VCO = CLKIN * CLKFBOUT_MULT_F / DIVCLK_DIVIDE = 100 * 10 / 1 = 1000 MHz
 //   (within Artix-7 MMCM range 600–1200 MHz)
 //   CLKOUT0 = VCO / CLKOUT0_DIVIDE_F = 1000 / 50 = 20 MHz
 //
 // locked is asserted when the PLL achieves phase lock.
-// clk_20mhz is the clock for all sequential logic; clk_25mhz drives only this PLL.
+// clk_20mhz is the clock for all sequential logic; the input drives only this PLL.
+// NOTE: the input port is named clk_25mhz for interface compatibility with the
+// upstream ECP5 design, but on this board it carries the 100 MHz oscillator.
 module pll_20 (
     input  wire clk_25mhz,
     output wire clk_20mhz,
@@ -21,14 +23,14 @@ module pll_20 (
         .COMPENSATION         ("ZHOLD"),
         .STARTUP_WAIT         ("FALSE"),
         .DIVCLK_DIVIDE        (1),
-        .CLKFBOUT_MULT_F      (40.000),   // VCO = 25 * 40 = 1000 MHz
+        .CLKFBOUT_MULT_F      (10.000),   // VCO = 100 * 10 = 1000 MHz
         .CLKFBOUT_PHASE       (0.000),
         .CLKFBOUT_USE_FINE_PS ("FALSE"),
         .CLKOUT0_DIVIDE_F     (50.000),   // 1000 / 50 = 20 MHz
         .CLKOUT0_PHASE        (0.000),
         .CLKOUT0_DUTY_CYCLE   (0.500),
         .CLKOUT0_USE_FINE_PS  ("FALSE"),
-        .CLKIN1_PERIOD        (40.000),   // 1/25 MHz = 40 ns
+        .CLKIN1_PERIOD        (10.000),   // 1/100 MHz = 10 ns
         .REF_JITTER1          (0.010)
     ) mmcm_inst (
         .CLKFBOUT   (clkfb),
