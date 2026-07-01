@@ -40,6 +40,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Vivado runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    locales \
     libncurses5 \
     libx11-6 \
     libxext6 \
@@ -48,12 +49,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxi6 \
     libfreetype6 \
     libfontconfig1 \
+    libpixman-1-0 \
     libtcl8.6 \
     libtk8.6 \
     python3 \
     python3-pip \
     make \
     && rm -rf /var/lib/apt/lists/*
+
+# Vivado's C++ runtime aborts if en_US.UTF-8 is missing (locale::facet
+# _S_create_c_locale crash). Generate it and make it the default.
+RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
 # Copy the web installer and config
 COPY FPGAs_AdaptiveSoCs_Unified_*.bin /tmp/installer.bin
@@ -73,6 +80,14 @@ RUN --mount=type=secret,id=amd_token \
         --config /tmp/install_config.txt \
     && rm /tmp/installer.bin /root/.Xilinx/wi_authentication_key
 
-ENV PATH="/tools/Xilinx/Vivado/2026.1/bin:${PATH}"
+ENV PATH="/tools/Xilinx/2026.1/Vivado/bin:${PATH}"
+
+# LAST STEP — remove libudev so FlexLM skips its USB-dongle enumeration.
+# Under QEMU/Apple-Virtualization emulation that udev scan corrupts glibc's heap
+# ("realloc(): invalid pointer") and aborts Vivado during license checkout.
+# FlexLM dlopen()s libudev.so.1 by name; with it absent the dlopen fails
+# gracefully and checkout falls back to the (MAC-derived) node-locked host ID.
+# Must come after all apt-get steps — apt itself depends on libudev.
+RUN rm -f /lib/x86_64-linux-gnu/libudev.so.1* /usr/lib/x86_64-linux-gnu/libudev.so.1*
 
 WORKDIR /work

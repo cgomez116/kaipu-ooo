@@ -48,3 +48,19 @@ git clone --recurse-submodules https://github.com/cgomez116/kaipu-ooo.git
 cd kaipu-ooo
 # vendor/kaipu is the shared substrate — tools, ISS, and tests all live there
 ```
+
+## FPGA build (Nexys A7-100T)
+
+The Vivado bitstream flow runs the AMD toolchain in Docker — including x86-64
+emulation on Apple Silicon:
+
+```sh
+make docker-build      # one-time: build the Vivado image
+make docker-bit        # synth → place → route → synth/nexys_a7/top.bit
+make flash             # board connected: flash via openFPGALoader
+```
+
+Getting Vivado 2026.1 to build under emulation took seven distinct fixes
+(licensing, a libudev heap crash, a real PLL bug, and more). See
+[docs/vivado-emulation-lessons.md](docs/vivado-emulation-lessons.md) for the
+full debugging chain and why each workaround exists.
